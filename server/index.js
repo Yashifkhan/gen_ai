@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 import { tavily } from '@tavily/core';
 import readline from 'readline/promises';
 dotenv.config()
-
+ 
 const groqApiKey = process.env.GROQ_API_KEY;
 const groqClient = new groq({ apiKey: groqApiKey });
 const tavilyClient = tavily({ apiKey: process.env.TAVILY_API_KEY });
@@ -110,8 +110,6 @@ If tools are not required, answer normally , current date or time ${new Date().t
 
 
 }
-
-
 
 async function webSearch({ query }) {
     console.log("web search tool call...");
