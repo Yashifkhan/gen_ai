@@ -1,17 +1,19 @@
 console.log("learn gen ai with node ");
 import groq from 'groq-sdk';
 import dotenv from 'dotenv'
-import { tavily } from '@tavily/core';
-import readline from 'readline/promises';
 dotenv.config()
+import NodeCache from 'node-cache';
+import { tavily } from '@tavily/core';
 
 const groqApiKey = process.env.GROQ_API_KEY;
 const groqClient = new groq({ apiKey: groqApiKey });
 const tavilyClient = tavily({ apiKey: process.env.TAVILY_API_KEY });
 
+const cache = new NodeCache({ stdTTL: 2*60*60});
 
-const userChat = async (propmt = "") => {
-    const messages = [
+const userChat = async (propmt = "",nodeId) => {
+    
+    const basemessage = [
         {
             role: "system",
             content: `You are a Smart personal assistant.
@@ -39,13 +41,24 @@ const userChat = async (propmt = "") => {
 
     ]
 
+    const messages= cache.get(nodeId) ??  basemessage 
+    console.log("messages to get cache",messages);
+    
+
     if (propmt.toLowerCase() === "exit" || propmt.toLowerCase() === "bye") {
         return "chat ended";
     }
 
     messages.push({ role: "user", content: propmt });
 
+    const max_try=10;
+    let count=0
     while (true) {
+
+        if (count >= max_try ){
+            return "unable to get response try again later";
+        }
+        count++;
         const complition = await groqClient.chat.completions.create({
             model: "llama-3.3-70b-versatile",
             // model: "openai/gpt-oss-120b",
@@ -70,17 +83,15 @@ const userChat = async (propmt = "") => {
                     }
                 }
             ],
-            //        tool_choice: {
-            //   type: "function",
-            //   function: { name: "webSearch" }
-            // }
             tool_choice: 'auto'
 
         });
         messages.push(complition.choices[0].message);
         const toolCalls = complition.choices[0].message.tool_calls;
         if (!toolCalls || toolCalls.length === 0) {
-            // console.log("Final Answer: ", );
+            cache.set(nodeId, messages);
+            console.log("chack cache data",cache.data);
+            
             return complition.choices[0].message.content;
         }
 

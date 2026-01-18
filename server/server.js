@@ -16,10 +16,18 @@ app.get('/', (req, res) => {
 });
 
 app.post('/api/v1/emo-chat', async (req, res) => {
-    console.log("emo chat start");
-    const { message } = req.body;
-    console.log("Received message:", message);
-    const result = await userChat(message);
+    // console.log("emo chat start");
+    const { message,nodeId } = req.body;
+
+    console.log("message",message);
+    console.log("nodeId",nodeId);
+    if (!message || !nodeId) {
+        return res.status(400).json({ message: "Invalid request, message and nodeId are required.", success: false });
+    }
+    
+    
+
+    const result = await userChat(message,nodeId);
     res.status(201).json({message: "Ans is get successfully",success: true,data: result });
 });
 
