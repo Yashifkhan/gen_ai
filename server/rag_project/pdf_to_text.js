@@ -69,9 +69,7 @@ export async function pdfToText(filepath) {
 
 export async function testSearch(query) {
     console.log(`\n🔍 Searching for: "${query}"\n`);
-    
     const results = await vectorStore.similaritySearch(query, 3);
-    
     console.log("📊 Search Results:\n");
     results.forEach((result, i) => {
         console.log(`--- Result ${i + 1} ---`);
