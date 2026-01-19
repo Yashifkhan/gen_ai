@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Send, Moon, Sun } from 'lucide-react';
+import { Send, Moon, Sun, Sparkles } from 'lucide-react';
 
-const chatSessionId=Date.now().toString(36) + Math.random().toString(36).substring(2,8)
-
+const chatSessionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8)
 
 export default function App() {
   const [messages, setMessages] = useState([]);
@@ -12,7 +11,6 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
 
 
-  
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
@@ -29,7 +27,7 @@ export default function App() {
     try {
       const res = await axios.post(
         'http://localhost:8000/api/v1/emo-chat',
-        { message: userMsg.text,nodeId: userMsg.nodeId },
+        { message: userMsg.text, nodeId: userMsg.nodeId },
       );
 
       setMessages(prev => [
@@ -59,10 +57,10 @@ export default function App() {
       style={
         isDarkMode
           ? {
-              background:
-                'linear-gradient(135deg, #0b0206 0%, #4a0f2a 45%, #8b0f3a 100%)',
-              color: '#ffffff',
-            }
+            background:
+              'linear-gradient(135deg, #0b0206 0%, #4a0f2a 45%, #8b0f3a 100%)',
+            color: '#ffffff',
+          }
           : { background: '#f1f5f9' }
       }
     >
@@ -88,18 +86,18 @@ export default function App() {
               style={
                 msg?.sender === 'user'
                   ? {
-                      background:
-                        'linear-gradient(135deg, #8b0f3a, #c2185b)',
-                      color: '#ffffff',
-                    }
+                    background:
+                      'linear-gradient(135deg, #8b0f3a, #c2185b)',
+                    color: '#ffffff',
+                  }
                   : isDarkMode
-                  ? {
+                    ? {
                       background: 'rgba(0,0,0,0.35)',
                       color: '#ffffff',
                       backdropFilter: 'blur(6px)',
                       border: '1px solid rgba(255,255,255,0.08)',
                     }
-                  : {
+                    : {
                       background: '#ffffff',
                       color: '#1e293b',
                       border: '1px solid #e5e7eb',
@@ -111,25 +109,42 @@ export default function App() {
           </div>
         ))}
       </div>
-{isLoading && (
-  <div className="flex justify-start">
-    <div
-      className={`px-4 py-2 rounded-xl text-sm flex items-center gap-2
-      ${isDarkMode
-        ? 'bg-black/40 text-white border border-white/10'
-        : 'bg-white text-slate-800 border border-slate-200'
-      }`}
-    >
-      <span>Thinking</span>
+     {isLoading && (
+          <div className="flex justify-start">
+            <div
+              className={`relative px-5 py-2 rounded-2xl text-sm flex items-center gap-3
+                ${isDarkMode
+                  ? 'bg-black/40 text-white border border-white/20 shadow-lg shadow-blue-500/10'
+                  : 'bg-white text-slate-800 border border-slate-200 shadow-lg'
+                }`}
+            >
 
-      <div className="flex gap-1">
-        <span className="animate-bounce [animation-delay:0ms]">•</span>
-        <span className="animate-bounce [animation-delay:150ms]">•</span>
-        <span className="animate-bounce [animation-delay:300ms]">•</span>
-      </div>
-    </div>
-  </div>
-)}
+<style>
+{`
+@keyframes dotBounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-4px); /* 👈 increase height here */
+    opacity: 1;
+  }
+}
+`}
+</style>
+              <span className="font-medium">AI is thinking</span>
+            {/* <div className="flex gap-1 relative z-10">
+  <span className="w-1.5 h-1.5 rounded-full bg-current animate-[dotBounce_1.2s_ease-in-out_infinite] [animation-delay:0ms]" />
+  <span className="w-1.5 h-1.5 rounded-full bg-current animate-[dotBounce_1.2s_ease-in-out_infinite] [animation-delay:150ms]" />
+  <span className="w-1.5 h-1.5 rounded-full bg-current animate-[dotBounce_1.2s_ease-in-out_infinite] [animation-delay:300ms]" />
+</div> */}
+              <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: '3s' }} />
+
+
+            </div>
+          </div>
+        )}
 
 
       {/* Input */}
@@ -149,14 +164,14 @@ export default function App() {
           style={
             isDarkMode
               ? {
-                  background: 'rgba(0,0,0,0.35)',
-                  color: '#ffffff',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                }
+                background: 'rgba(0,0,0,0.35)',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.12)',
+              }
               : {
-                  background: '#ffffff',
-                  border: '1px solid #e5e7eb',
-                }
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
+              }
           }
         />
 
