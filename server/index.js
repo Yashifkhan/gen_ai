@@ -8,6 +8,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { PineconeStore } from '@langchain/pinecone'
 import { Embeddings } from "@langchain/core/embeddings";
 import { Pinecone as PineconeClient } from "@pinecone-database/pinecone";
+import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { Document } from "@langchain/core/documents";
 
 const groqApiKey = process.env.GROQ_API_KEY;
 const groqClient = new groq({ apiKey: groqApiKey });
@@ -56,7 +59,6 @@ const userChat = async (propmt = "",nodeId) => {
     
     if (intent == "general_chat" || intent == "websearch"){
         console.log("am inside the websearch function or simple chat");
-        
          const basemessage = [
         {
             role: "system",
@@ -160,17 +162,95 @@ const userChat = async (propmt = "",nodeId) => {
     }
 
     }
-    else if (intent === "pdf_query"){
-        console.log("query is pdf related" , intent);
-        const vectorDbResult=await testSearch(propmt)
-        const correctExtract=vectorDbResult.map((text)=>text.pageContent)
-        console.log("correctExtract",correctExtract[0]);
-        
-        
-        
-    }
+    // else if (intent === "pdf_query"){
+    //     console.log("query is pdf related" , intent);
+    //     const vectorDbResult=await testSearch(propmt)
+    //     const correctExtract=vectorDbResult.map((text)=>text.pageContent)
+    //     console.log("correctExtract",correctExtract[0]); 
+    // }
 
-}
+      else if (intent === "pdf_query") {
+    console.log("Starting PDF query flow");
+    
+    // Step 1: Get relevant context from Vector DB
+    const vectorDbResults = await testSearch(propmt);
+    
+    if (!vectorDbResults || vectorDbResults.length === 0) {
+      return "I couldn't find any relevant information in your uploaded documents. Please make sure you've uploaded a PDF first.";
+    }
+    
+    // Step 2: Extract text from vector DB results
+    const relevantContext = vectorDbResults.map((result) => result.pageContent).join('\n\n---\n\n');
+
+     if (relevantContext[0]?.Document?.pageContent.length === 0 ) {
+      return "I couldn't find any relevant information in your uploaded documents. Please make sure you've uploaded a PDF first.";
+    }
+    
+    const cachedMessages = cache.get(nodeId) || [];
+
+    console.log("cachedMessages",cachedMessages);
+    
+    
+    const pdfSystemMessage = {
+      role: "system",
+      content: `You are a helpful assistant answering questions about the user's uploaded PDF document.
+
+CONTEXT FROM USER'S DOCUMENT:
+${relevantContext}
+
+INSTRUCTIONS:
+- Answer the user's question based ONLY on the context provided above
+- If the context doesn't contain enough information to answer, say so clearly
+- Be specific and cite relevant parts of the document
+- Keep your answer concise and directly related to the question
+- Do not make up information that's not in the context
+
+Current date/time: ${new Date().toUTCString()}`
+    };
+    
+    // Step 5: Prepare messages array
+    const messages = [
+      pdfSystemMessage,
+      ...cachedMessages.slice(-4), // Keep last 2 exchanges for context (4 messages)
+      { role: "user", content: propmt }
+    ];
+    
+    
+    // Step 6: Get response from LLM
+    const completion = await groqClient.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: messages,
+      temperature: 0.3, // Lower temperature for more factual responses
+      max_tokens: 1000
+    });
+    
+    const assistantResponse = completion.choices[0].message.content;
+    
+    console.log("llm responsea after get the data in db",assistantResponse);
+    
+    // Step 7: Update cache with this conversation
+    const updatedMessages = cache.get(nodeId) || [];
+    updatedMessages.push(
+      { role: "user", content: propmt },
+      { role: "assistant", content: assistantResponse }
+    );
+    
+    // // Keep only last 10 messages to avoid token limit
+    if (updatedMessages.length > 10) {
+      updatedMessages.splice(0, updatedMessages.length - 10);
+    }
+    
+    cache.set(nodeId, updatedMessages);
+    console.log("Cache updated with PDF conversation");
+    
+    return assistantResponse;
+  }
+  
+  // Fallback
+  return "I couldn't determine how to handle your request. Please try again.";
+};
+
+
 
 
 // user query filter where to start the process 
@@ -207,6 +287,63 @@ async function webSearch({ query }) {
     return finalresult;
 }
 
+// upload pdf to vector db 
+// export async function uploadPdfInVectorDB(filepath) {
+//     const loader = new PDFLoader(filepath, { splitPages: false });
+//     const doc = await loader.load();
+//     const textSplitter = new RecursiveCharacterTextSplitter({
+//         chunkSize: 500,
+//         chunkOverlap: 100,
+//     });
+//     const text = await textSplitter.splitText(doc[0].pageContent);
+//     const documents = text.map((chunk) => {
+//         return {
+//             pageContent: chunk,
+//             metadata: doc[0].metadata
+//         }
+//     })
+//     const vcdbresult=await vectorStore.addDocuments(documents)
+//     console.log("pdf save in db ", vcdbresult);
+// }
+export async function uploadPdfInVectorDB(filepath, nodeId) {
+    try {
+        // Load PDF
+        const loader = new PDFLoader(filepath, { splitPages: false });
+        const doc = await loader.load();
+        
+        // Split into chunks
+        const textSplitter = new RecursiveCharacterTextSplitter({
+            chunkSize: 500,
+            chunkOverlap: 100,
+        });
+        
+        const text = await textSplitter.splitText(doc[0].pageContent);
+        
+        // ✅ Create proper Document objects with nodeId in metadata
+        const documents = text.map((chunk, index) => {
+            return new Document({
+                pageContent: chunk,
+                metadata: {
+                    ...doc[0].metadata,
+                    nodeId: nodeId,  // Add nodeId for filtering
+                    chunkIndex: index,
+                    uploadedAt: new Date().toISOString()
+                }
+            });
+        });
+        
+        // Upload to Pinecone
+        await vectorStore.addDocuments(documents);
+        
+        console.log(`✅ Uploaded ${documents.length} chunks for nodeId: ${nodeId}`);
+        
+        return documents;
+        
+    } catch (error) {
+        console.error("Error uploading PDF:", error);
+        throw error;
+    }
+}
 
 
 // get the data in vector db 
