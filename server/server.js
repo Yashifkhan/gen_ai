@@ -6,7 +6,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-import userChat, { uploadPdfInVectorDB } from './index.js';
+import  uploadPdfInVectorDB from './index.js'
+import userChatStreaming  from './index.js';
 
 // import userChat from '.';
 
@@ -87,16 +88,41 @@ app.post('/api/v1/emo-chat-upload-pdf', upload.single('pdf'), async (req, res) =
     }
 });
 
+// app.post('/api/v1/emo-chat', async (req, res) => {
+//     const { message,nodeId } = req.body;
+//     if (!message || !nodeId) {
+//         return res.status(400).json({ message: "Invalid request, message and nodeId are required.", success: false });
+//     }
+//     const result = await userChat(message,nodeId);
+//     res.status(201).json({message: "Ans is get successfully",success: true,data: result });
+// });
 app.post('/api/v1/emo-chat', async (req, res) => {
-    const { message,nodeId } = req.body;
+    const { message, nodeId } = req.body;
+    
     if (!message || !nodeId) {
-        return res.status(400).json({ message: "Invalid request, message and nodeId are required.", success: false });
+        return res.status(400).json({ 
+            message: "Invalid request, message and nodeId are required.", 
+            success: false 
+        });
     }
 
-    // const context = await testSearch(message, nodeId, 3);
-    const result = await userChat(message,nodeId);
-    res.status(201).json({message: "Ans is get successfully",success: true,data: result });
+    // Set headers for Server-Sent Events (SSE)
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+
+    try {
+        await userChatStreaming(message, nodeId, res);
+    } catch (error) {
+        console.error('Streaming error:', error);
+        res.write(`data: ${JSON.stringify({ error: 'An error occurred' })}\n\n`);
+    } finally {
+        res.end();
+    }
 });
+
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
