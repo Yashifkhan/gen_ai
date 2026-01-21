@@ -91,30 +91,95 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const res = await axios.post(
-        'http://localhost:8000/api/v1/emo-chat',
-        { message: userMsg.text, nodeId: userMsg.nodeId },
-      );
+  const tempAiMessageId = Date.now() + 1;
+  
+  setMessages(prev => [
+    ...prev,
+    {
+      id: tempAiMessageId,
+      text: '',
+      sender: 'ai',
+    },
+  ]);
 
-      setMessages(prev => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          text: res.data.data,
-          sender: 'ai',
-        },
-      ]);
-      setIsLoading(false)
-    } catch {
-      setMessages(prev => [
-        ...prev,
-        {
-          id: Date.now() + 2,
-          text: 'AI response failed.',
-          sender: 'ai',
-        },
-      ]);
+  const response = await fetch('http://localhost:8000/api/v1/emo-chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ 
+      message: userMsg.text, 
+      nodeId: userMsg.nodeId 
+    }),
+  });
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = ''; // Buffer for incomplete lines
+  let accumulatedText = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    
+    if (done) {
+      setIsLoading(false);
+      break;
     }
+
+    // Add to buffer
+    buffer += decoder.decode(value, { stream: true });
+    
+    // Split by newlines
+    const lines = buffer.split('\n');
+    
+    // Keep the last incomplete line in buffer
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.trim().startsWith('data: ')) {
+        try {
+          const jsonStr = line.slice(6).trim();
+          const data = JSON.parse(jsonStr);
+          
+          if (data.chunk) {
+            accumulatedText += data.chunk;
+            
+            setMessages(prev =>
+              prev.map(msg =>
+                msg.id === tempAiMessageId
+                  ? { ...msg, text: accumulatedText }
+                  : msg
+              )
+            );
+          }
+          
+          if (data.done) {
+            setIsLoading(false);
+          }
+          
+          if (data.error) {
+            console.error('Error:', data.error);
+            setIsLoading(false);
+          }
+        } catch (e) {
+          console.error('JSON parse error:', e);
+        }
+      }
+    }
+  }
+} catch (error) {
+  console.error('Error:', error);
+  setIsLoading(false);
+  
+  setMessages(prev => [
+    ...prev,
+    {
+      id: Date.now() + 1,
+      text: 'An error occurred. Please try again.',
+      sender: 'ai',
+    },
+  ]);
+}
   };
 
   return (
