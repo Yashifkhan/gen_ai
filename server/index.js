@@ -276,6 +276,7 @@ const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
         sendComplete();
     }
 };
+
 const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplete) => {
     const baseMessage = [
         {
@@ -289,9 +290,7 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
             current date or time ${new Date().toUTCString()}`,
         },
     ];
-
     const messages = cache.get(nodeId) ?? baseMessage;
-    
     if (prompt.toLowerCase() === "exit" || prompt.toLowerCase() === "bye") {
         sendChunk("Chat ended");
         sendComplete();
@@ -393,7 +392,7 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
     }
 };
 const handlePdfQueryStreaming = async (prompt, nodeId, sendChunk, sendComplete) => {
-    console.log("Starting PDF query flow");
+    // console.log("Starting PDF query flow");
     
     const vectorDbResults = await testSearch(prompt);
     
@@ -444,6 +443,7 @@ Current date/time: ${new Date().toUTCString()}`
         stream: true // Enable streaming
     });
     
+    // console.log("completion",completion.choices[0].message)
     let assistantResponse = "";
     
     // Stream the response
@@ -456,7 +456,7 @@ Current date/time: ${new Date().toUTCString()}`
         }
     }
     
-    console.log("llm response after get the data in db", assistantResponse);
+    // console.log("llm response after get the data in db", assistantResponse);
     
     // Update cache
     const updatedMessages = cache.get(nodeId) || [];

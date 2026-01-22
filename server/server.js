@@ -6,8 +6,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-import  uploadPdfInVectorDB from './index.js'
-import userChatStreaming  from './index.js';
+// import  uploadPdfInVectorDB from './index.js'
+import userChatStreaming, { uploadPdfInVectorDB }  from './index.js';
 
 // import userChat from '.';
 
