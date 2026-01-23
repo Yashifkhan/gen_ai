@@ -16,8 +16,7 @@ const groqApiKey = process.env.GROQ_API_KEY;
 const groqClient = new groq({ apiKey: groqApiKey });
 const tavilyClient = tavily({ apiKey: process.env.TAVILY_API_KEY });
 
-const cache = new NodeCache({ stdTTL: 2*60*60});
-
+const cache = new NodeCache({ stdTTL: 2 * 60 * 60 });
 
 class GoogleGenerativeAIEmbeddings extends Embeddings {
     constructor(apiKey) {
@@ -44,8 +43,8 @@ class GoogleGenerativeAIEmbeddings extends Embeddings {
     }
 }
 
-const embeddings=new GoogleGenerativeAIEmbeddings(process.env.GEMINI_KEY)
-const pinecone = new PineconeClient({apiKey:process.env.PINECONE_API_KEY})
+const embeddings = new GoogleGenerativeAIEmbeddings(process.env.GEMINI_KEY)
+const pinecone = new PineconeClient({ apiKey: process.env.PINECONE_API_KEY })
 const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX)
 
 const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
@@ -56,7 +55,7 @@ const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
 // const userChat = async (propmt = "",nodeId) => {    
 //     const intent=await classifyIntent(propmt)
 //     console.log("intent",intent);
-    
+
 //     if (intent == "general_chat" || intent == "websearch"){
 //         console.log("am inside the websearch function or simple chat");
 //          const basemessage = [
@@ -133,8 +132,8 @@ const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
 //         if (!toolCalls || toolCalls.length === 0) {
 //             cache.set(nodeId, messages);
 //             // console.log("chack cache data",cache.data);
-            
-            
+
+
 //             return complition.choices[0].message.content;
 //         }
 
@@ -171,26 +170,26 @@ const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
 
 //       else if (intent === "pdf_query") {
 //     console.log("Starting PDF query flow");
-    
+
 //     // Step 1: Get relevant context from Vector DB
 //     const vectorDbResults = await testSearch(propmt);
-    
+
 //     if (!vectorDbResults || vectorDbResults.length === 0) {
 //       return "I couldn't find any relevant information in your uploaded documents. Please make sure you've uploaded a PDF first.";
 //     }
-    
+
 //     // Step 2: Extract text from vector DB results
 //     const relevantContext = vectorDbResults.map((result) => result.pageContent).join('\n\n---\n\n');
 
 //      if (relevantContext[0]?.Document?.pageContent.length === 0 ) {
 //       return "I couldn't find any relevant information in your uploaded documents. Please make sure you've uploaded a PDF first.";
 //     }
-    
+
 //     const cachedMessages = cache.get(nodeId) || [];
 
 //     console.log("cachedMessages",cachedMessages);
-    
-    
+
+
 //     const pdfSystemMessage = {
 //       role: "system",
 //       content: `You are a helpful assistant answering questions about the user's uploaded PDF document.
@@ -207,15 +206,15 @@ const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
 
 // Current date/time: ${new Date().toUTCString()}`
 //     };
-    
+
 //     // Step 5: Prepare messages array
 //     const messages = [
 //       pdfSystemMessage,
 //       ...cachedMessages.slice(-4), // Keep last 2 exchanges for context (4 messages)
 //       { role: "user", content: propmt }
 //     ];
-    
-    
+
+
 //     // Step 6: Get response from LLM
 //     const completion = await groqClient.chat.completions.create({
 //       model: "llama-3.3-70b-versatile",
@@ -223,54 +222,54 @@ const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
 //       temperature: 0.3, // Lower temperature for more factual responses
 //       max_tokens: 1000
 //     });
-    
+
 //     const assistantResponse = completion.choices[0].message.content;
-    
+
 //     console.log("llm responsea after get the data in db",assistantResponse);
-    
+
 //     // Step 7: Update cache with this conversation
 //     const updatedMessages = cache.get(nodeId) || [];
 //     updatedMessages.push(
 //       { role: "user", content: propmt },
 //       { role: "assistant", content: assistantResponse }
 //     );
-    
+
 //     // // Keep only last 10 messages to avoid token limit
 //     if (updatedMessages.length > 10) {
 //       updatedMessages.splice(0, updatedMessages.length - 10);
 //     }
-    
+
 //     cache.set(nodeId, updatedMessages);
 //     console.log("Cache updated with PDF conversation");
-    
+
 //     return assistantResponse;
 //   }
-  
+
 //   // Fallback
 //   return "I couldn't determine how to handle your request. Please try again.";
 // };
 
- const userChatStreaming = async (prompt = "", nodeId, res) => {
+const userChatStreaming = async (prompt = "", nodeId, res) => {
     const intent = await classifyIntent(prompt);
     console.log("intent", intent);
-    
+
     // Helper function to send streaming chunks
     const sendChunk = (text) => {
         // console.log("stream response : ",text);
-        
+
         res.write(`data: ${JSON.stringify({ chunk: text })}\n\n`);
     };
-    
+
     const sendComplete = () => {
         res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     };
 
     if (intent === "general_chat" || intent === "websearch") {
         await handleGeneralChatStreaming(prompt, nodeId, sendChunk, sendComplete);
-    } 
+    }
     else if (intent === "pdf_query") {
         await handlePdfQueryStreaming(prompt, nodeId, sendChunk, sendComplete);
-    } 
+    }
     else {
         sendChunk("I couldn't determine how to handle your request. Please try again.");
         sendComplete();
@@ -301,7 +300,7 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
 
     const maxTry = 10;
     let count = 0;
-    
+
     while (true) {
         if (count >= maxTry) {
             sendChunk("Unable to get response, try again later");
@@ -337,24 +336,24 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
         });
 
         // messages.push(completion?.choices[0]?.message);
-        
+
         let fullContent = "";
         let toolCalls = [];
-        
+
         // Stream the response
         for await (const chunk of completion) {
             const delta = chunk.choices[0]?.delta;
-            
+
             if (delta?.content) {
                 fullContent += delta.content;
                 sendChunk(delta.content); // Send each chunk to client
             }
-            
+
             if (delta?.tool_calls) {
                 toolCalls = delta.tool_calls;
             }
         }
-         const assistantMessage = {
+        const assistantMessage = {
             role: "assistant",
             content: fullContent || null,
         };
@@ -380,7 +379,7 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
 
             if (functionName === "webSearch") {
                 const toolResult = await webSearch(JSON.parse(functionParams));
-                
+
                 messages.push({
                     tool_call_id: tool.id,
                     role: 'tool',
@@ -393,15 +392,15 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
 };
 const handlePdfQueryStreaming = async (prompt, nodeId, sendChunk, sendComplete) => {
     // console.log("Starting PDF query flow");
-    
+
     const vectorDbResults = await testSearch(prompt);
-    
+
     if (!vectorDbResults || vectorDbResults.length === 0) {
         sendChunk("I couldn't find any relevant information in your uploaded documents. Please make sure you've uploaded a PDF first.");
         sendComplete();
         return;
     }
-    
+
     const relevantContext = vectorDbResults.map((result) => result.pageContent).join('\n\n---\n\n');
 
     if (relevantContext[0]?.Document?.pageContent.length === 0) {
@@ -409,9 +408,9 @@ const handlePdfQueryStreaming = async (prompt, nodeId, sendChunk, sendComplete) 
         sendComplete();
         return;
     }
-    
+
     const cachedMessages = cache.get(nodeId) || [];
-    
+
     const pdfSystemMessage = {
         role: "system",
         content: `You are a helpful assistant answering questions about the user's uploaded PDF document.
@@ -428,13 +427,13 @@ INSTRUCTIONS:
 
 Current date/time: ${new Date().toUTCString()}`
     };
-    
+
     const messages = [
         pdfSystemMessage,
         ...cachedMessages.slice(-4),
         { role: "user", content: prompt }
     ];
-    
+
     const completion = await groqClient.chat.completions.create({
         model: "llama-3.3-70b-versatile",
         messages: messages,
@@ -442,41 +441,41 @@ Current date/time: ${new Date().toUTCString()}`
         max_tokens: 1000,
         stream: true // Enable streaming
     });
-    
+
     // console.log("completion",completion.choices[0].message)
     let assistantResponse = "";
-    
+
     // Stream the response
     for await (const chunk of completion) {
         const delta = chunk.choices[0]?.delta;
-        
+
         if (delta?.content) {
             assistantResponse += delta.content;
             sendChunk(delta.content); // Send each chunk to client
         }
     }
-    
+
     // console.log("llm response after get the data in db", assistantResponse);
-    
+
     // Update cache
     const updatedMessages = cache.get(nodeId) || [];
     updatedMessages.push(
         { role: "user", content: prompt },
         { role: "assistant", content: assistantResponse }
     );
-    
+
     if (updatedMessages.length > 10) {
         updatedMessages.splice(0, updatedMessages.length - 10);
     }
-    
+
     cache.set(nodeId, updatedMessages);
-    
+
     sendComplete();
 };
 
 // user query filter where to start the process 
-async function classifyIntent(userMessage, userId) {    
-  const classificationPrompt = `Analyze this user message and determine if it's asking about:
+async function classifyIntent(userMessage, userId) {
+    const classificationPrompt = `Analyze this user message and determine if it's asking about:
 1. Their uploaded PDF/document (answer: "pdf_query")
 2. General chat/information (answer: "general_chat")
 3. Web search needed (answer: "webSearch")
@@ -491,13 +490,13 @@ Context clues for PDF queries:
 
 Answer with ONLY one word: pdf_query, general_chat, or webSearch`;
 
-  const response = await groqClient.chat.completions.create({
-   model: "llama-3.3-70b-versatile",
-    messages: [{ role: "user", content: classificationPrompt }],
-    temperature: 0.2,
-    max_tokens: 10
-  });
-  return response.choices[0].message.content.trim().toLowerCase();
+    const response = await groqClient.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: classificationPrompt }],
+        temperature: 0.2,
+        max_tokens: 10
+    });
+    return response.choices[0].message.content.trim().toLowerCase();
 }
 
 // web search tool 
@@ -531,15 +530,15 @@ export async function uploadPdfInVectorDB(filepath, nodeId) {
         // Load PDF
         const loader = new PDFLoader(filepath, { splitPages: false });
         const doc = await loader.load();
-        
+
         // Split into chunks
         const textSplitter = new RecursiveCharacterTextSplitter({
             chunkSize: 500,
             chunkOverlap: 100,
         });
-        
+
         const text = await textSplitter.splitText(doc[0].pageContent);
-        
+
         // ✅ Create proper Document objects with nodeId in metadata
         const documents = text.map((chunk, index) => {
             return new Document({
@@ -552,20 +551,19 @@ export async function uploadPdfInVectorDB(filepath, nodeId) {
                 }
             });
         });
-        
+
         // Upload to Pinecone
         await vectorStore.addDocuments(documents);
-        
+
         console.log(`✅ Uploaded ${documents.length} chunks for nodeId: ${nodeId}`);
-        
+
         return documents;
-        
+
     } catch (error) {
         console.error("Error uploading PDF:", error);
         throw error;
     }
 }
-
 
 // get the data in vector db 
 export async function testSearch(query) {

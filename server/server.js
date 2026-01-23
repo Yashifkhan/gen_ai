@@ -1,4 +1,4 @@
-import  express from 'express';
+import express from 'express';
 import dotenv from 'dotenv';
 dotenv.config();
 import cors from 'cors';
@@ -6,10 +6,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// import  uploadPdfInVectorDB from './index.js'
-import userChatStreaming, { uploadPdfInVectorDB }  from './index.js';
-
-// import userChat from '.';
+import userChatStreaming, { uploadPdfInVectorDB } from './index.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -35,7 +32,7 @@ const storage = multer.diskStorage({
         cb(null, uniqueName);
     }
 });
-const upload = multer({ 
+const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
         if (file.mimetype === 'application/pdf') {
@@ -50,24 +47,24 @@ app.post('/api/v1/emo-chat-upload-pdf', upload.single('pdf'), async (req, res) =
     try {
         const { nodeId } = req.body;
         if (!req.file) {
-            return res.status(400).json({ 
-                message: "No PDF file uploaded", 
-                success: false 
+            return res.status(400).json({
+                message: "No PDF file uploaded",
+                success: false
             });
         }
 
         if (!nodeId) {
-            return res.status(400).json({ 
-                message: "nodeId is required", 
-                success: false 
+            return res.status(400).json({
+                message: "nodeId is required",
+                success: false
             });
         }
 
         const filepath = req.file.path;
-        
+
         // Upload to vector DB with nodeId in metadata
         const result = await uploadPdfInVectorDB(filepath, nodeId);
-        
+
         res.status(201).json({
             message: "PDF uploaded successfully",
             success: true,
@@ -77,32 +74,24 @@ app.post('/api/v1/emo-chat-upload-pdf', upload.single('pdf'), async (req, res) =
                 chunks: result.length
             }
         });
-        
+
     } catch (error) {
         console.error("Error uploading PDF:", error);
-        res.status(500).json({ 
-            message: "Failed to upload PDF", 
+        res.status(500).json({
+            message: "Failed to upload PDF",
             success: false,
-            error: error.message 
+            error: error.message
         });
     }
 });
 
-// app.post('/api/v1/emo-chat', async (req, res) => {
-//     const { message,nodeId } = req.body;
-//     if (!message || !nodeId) {
-//         return res.status(400).json({ message: "Invalid request, message and nodeId are required.", success: false });
-//     }
-//     const result = await userChat(message,nodeId);
-//     res.status(201).json({message: "Ans is get successfully",success: true,data: result });
-// });
 app.post('/api/v1/emo-chat', async (req, res) => {
     const { message, nodeId } = req.body;
-    
+
     if (!message || !nodeId) {
-        return res.status(400).json({ 
-            message: "Invalid request, message and nodeId are required.", 
-            success: false 
+        return res.status(400).json({
+            message: "Invalid request, message and nodeId are required.",
+            success: false
         });
     }
 
@@ -121,7 +110,6 @@ app.post('/api/v1/emo-chat', async (req, res) => {
         res.end();
     }
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

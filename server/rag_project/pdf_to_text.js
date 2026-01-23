@@ -32,6 +32,7 @@ class GoogleGenerativeAIEmbeddings extends Embeddings {
     }
 }
 
+
 const embeddings=new GoogleGenerativeAIEmbeddings(process.env.GEMINI_KEY)
 
 const pinecone = new PineconeClient({apiKey:process.env.PINECONE_API_KEY})
