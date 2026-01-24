@@ -448,25 +448,21 @@
 
 
 
-
-
-
-
-
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Moon, Sun, Paperclip, ChevronDown } from 'lucide-react';
+// 'use client';
+import React, { useState, useRef, useEffect } from "react";
+import { Send, Moon, Sun, Paperclip, ChevronDown, Sparkles, Bot, User, FileText, Check } from "lucide-react";
 
 const chatSessionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
 const AI_MODELS = [
-  { id: 'gpt-4', name: 'GPT-4', desc: 'Most capable' },
-  { id: 'gpt-3.5', name: 'GPT-3.5', desc: 'Fast & efficient' },
-  { id: 'claude', name: 'Claude', desc: 'Balanced' }
+  { id: "gpt-4", name: "GPT-4", desc: "Most capable model" },
+  { id: "gpt-3.5", name: "GPT-3.5", desc: "Fast & efficient" },
+  { id: "claude", name: "Claude", desc: "Balanced performance" },
 ];
 
-export default function App() {
+export default function EmoChat() {
   const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -475,98 +471,123 @@ export default function App() {
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const modelMenuRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modelMenuRef.current && !modelMenuRef.current.contains(event.target)) {
+        setShowModelMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const autoUploadPDF = async (file) => {
     const formData = new FormData();
-    formData.append('pdf', file);
-    formData.append('nodeId', chatSessionId);
+    formData.append("pdf", file);
+    formData.append("nodeId", chatSessionId);
 
     setIsUploading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/emo-chat-upload-pdf', {
-        method: 'POST',
+      const response = await fetch("http://localhost:8000/api/v1/emo-chat-upload-pdf", {
+        method: "POST",
         body: formData,
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setMessages(prev => [...prev, {
-          id: Date.now(),
-          text: `📄 PDF "${data.data.filename}" uploaded successfully! Ask me anything about it.`,
-          sender: 'system',
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            text: `PDF "${data.data.filename}" uploaded successfully! Ask me anything about it.`,
+            sender: "system",
+          },
+        ]);
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        text: `❌ Failed to upload PDF. Please try again.`,
-        sender: 'system',
-      }]);
+      console.error("Upload error:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "Failed to upload PDF. Please try again.",
+          sender: "system",
+        },
+      ]);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleFileSelect = (event) => {
-    const file = event.target.files[0];
+    const file = event.target.files?.[0];
 
-    if (file && file.type === 'application/pdf') {
+    if (file && file.type === "application/pdf") {
       autoUploadPDF(file);
     } else {
-      alert('Please select a valid PDF file');
+      alert("Please select a valid PDF file");
     }
 
-    event.target.value = '';
+    event.target.value = "";
   };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
     const userMsg = {
-      nodeId: chatSessionId,
-      text: inputMessage,
-      sender: 'user',
       id: Date.now(),
+      text: inputMessage,
+      sender: "user",
     };
 
-    setMessages(prev => [...prev, userMsg]);
-    setInputMessage('');
+    setMessages((prev) => [...prev, userMsg]);
+    setInputMessage("");
     setIsLoading(true);
 
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
     }
 
     try {
       const tempAiMessageId = Date.now() + 1;
 
-      setMessages(prev => [...prev, {
-        id: tempAiMessageId,
-        text: '',
-        sender: 'ai',
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: tempAiMessageId,
+          text: "",
+          sender: "ai",
+        },
+      ]);
 
-      const response = await fetch('http://localhost:8000/api/v1/emo-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("http://localhost:8000/api/v1/emo-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMsg.text,
-          nodeId: userMsg.nodeId,
-          model: selectedModel.id
+          nodeId: chatSessionId,
+          model: selectedModel.id,
         }),
       });
 
-      const reader = response.body.getReader();
+      const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
-      let accumulatedText = '';
+      let buffer = "";
+      let accumulatedText = "";
+
+      if (!reader) {
+        throw new Error("No response body");
+      }
 
       while (true) {
         const { done, value } = await reader.read();
@@ -577,19 +598,19 @@ export default function App() {
         }
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (line.trim().startsWith('data: ')) {
+          if (line.trim().startsWith("data: ")) {
             try {
               const jsonStr = line.slice(6).trim();
               const data = JSON.parse(jsonStr);
 
               if (data.chunk) {
                 accumulatedText += data.chunk;
-                setMessages(prev =>
-                  prev.map(msg =>
+                setMessages((prev) =>
+                  prev.map((msg) =>
                     msg.id === tempAiMessageId
                       ? { ...msg, text: accumulatedText }
                       : msg
@@ -599,280 +620,303 @@ export default function App() {
 
               if (data.done) setIsLoading(false);
               if (data.error) {
-                console.error('Error:', data.error);
+                console.error("Error:", data.error);
                 setIsLoading(false);
               }
             } catch (e) {
-              console.error('JSON parse error:', e);
+              console.error("JSON parse error:", e);
             }
           }
         }
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       setIsLoading(false);
 
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        text: 'An error occurred. Please try again.',
-        sender: 'ai',
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          text: "An error occurred. Please try again.",
+          sender: "ai",
+        },
+      ]);
     }
   };
-console.log("isDarkMode",isDarkMode);
 
-const changeThem=()=>{
-  console.log("hiiii");
-  setIsDarkMode(prev => !prev)
-}
-useEffect(()=>{
-  console.log("sjfkshdfkhs");
-  
+  const cn = (...classes) => classes.filter(Boolean).join(" ");
 
-},[isDarkMode])
+  // Theme classes
+  const bgClass = isDarkMode ? 'bg-black' : 'bg-white';
+  const textClass = isDarkMode ? 'text-slate-100' : 'text-slate-900';
+  const borderClass = isDarkMode ? 'border-slate-800' : 'border-slate-200';
+  const headerBg = isDarkMode ? 'bg-black' : 'bg-white/80';
+  const primaryBg = isDarkMode ? 'bg-transparent border border-gray-200' : 'bg-black text-white';
+  const primaryText = 'text-white';
+  const accentBg = isDarkMode ? 'bg-slate-800' : 'bg-slate-100';
+  const accentText = isDarkMode ? 'text-slate-200' : 'text-slate-800';
+  const cardBg = isDarkMode ? 'bg-black/60' : 'bg-white';
+  const cardBorder = isDarkMode ? 'border-gray-600' : 'border-gray-200';
+  const mutedText = isDarkMode ? 'text-slate-400' : 'text-slate-600';
+  const hoverAccent = isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100';
+  const popoverBg = isDarkMode ? 'bg-black' : 'bg-white';
+  const popoverBorder = isDarkMode ? 'border-slate-600' : 'border-slate-200';
 
   return (
-    <div
-      className="h-screen flex flex-col"
-      style={isDarkMode ? {
-        // background: 'linear-gradient(135deg, #2a2a2a 0%, #0e5f3d 45%, #00A240 100%)',
-        background: 'linear-gradient(to bottom, #2a2a2a 1%, #1a3f2f 50%, #00A240 100%)',
-        color: '#ffffff',
-      } : {
-        background: '#f8fafc',
-        color: '#1e293b'
-      }}
-    >
+    <div className={`h-screen flex flex-col transition-colors duration-300 ${bgClass} ${textClass}`}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+      <header className={`flex items-center justify-between px-4 md:px-6 py-2 border-b ${borderClass} backdrop-blur-sm ${headerBg} sticky top-0 z-50`}>
         <div className="flex items-center gap-3">
-          <h1 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-            Emo 
-          </h1>
-          {/* <span className={`text-xs px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-rose-500/20 text-rose-200' : 'bg-rose-100 text-rose-600' */}
-            {/* }`}> */}
-            {/* {selectedModel.name} */}
-          {/* </span> */}
+          
+           <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-sm font-semibold tracking-tight">Emo</h1>
+            <p className={`text-xs ${mutedText}`}>AI Assistant</p>
+          </div>
         </div>
         <button
-          onClick={()=>changeThem()}
-          className="p-2 rounded-lg hover:bg-white/10 transition"
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          className={`p-2.5 rounded-xl ${hoverAccent} transition-colors duration-200`}
+          aria-label="Toggle theme"
         >
-          {isDarkMode ? <Sun size={20} className="text-white" /> : <Moon size={20} />}
+          {isDarkMode ? (
+            <Sun className={`w-5 h-5 ${isDarkMode ? 'text-slate-100/80' : 'text-slate-900/80'}`} />
+          ) : (
+            <Moon className={`w-5 h-5 ${isDarkMode ? 'text-slate-100/80' : 'text-slate-900/80'}`} />
+          )}
         </button>
-       
-      </div>
+      </header>
 
-      {/* Messages */}
-      <div className="flex-1 -mt-40 p-4 space-y-1">
-        {messages.length === 0 && (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center space-y-1 opacity-60">
-              <h3 className="text-xl font-semibold tracking-wide text-white">
-                Hi, <span>Yashif</span>
-              </h3>
-              <p className="text-base text-gray-200">
-                What would you like help with today?
-              </p>
-            </div>
-
-          </div>
-        )}
-
-        {messages.map(msg => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.sender === 'user' ? 'justify-end' :
-                msg.sender === 'system' ? 'justify-center' :
-                  'justify-start'
-              }`}
-          >
-            <div
-              className={`px-4 py-2.5 rounded-2xl max-w-[80%] text-sm whitespace-pre-wrap ${msg.sender === 'system' ? 'text-xs' : ''
-                }`}
-              style={
-                msg.sender === 'user' ? {
-                  background: 'linear-gradient(135deg, #8b0f3a, #c2185b)',
-                  color: '#ffffff',
-                } : msg.sender === 'system' ? {
-                  background: isDarkMode ? 'rgba(139,15,58,0.2)' : 'rgba(139,15,58,0.1)',
-                  color: isDarkMode ? '#ffffff' : '#8b0f3a',
-                  border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(139,15,58,0.2)'}`,
-                } : isDarkMode ? {
-                  background: 'rgba(0,0,0,0.35)',
-                  color: '#ffffff',
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                } : {
-                  background: '#ffffff',
-                  color: '#1e293b',
-                  border: '1px solid #e2e8f0',
-                }
-              }
-            >
-              {msg.text}
-            </div>
-          </div>
-        ))}
-
-        {isLoading && (
-          <div className="flex justify-start">
-            <div
-              className="px-4 py-2.5 rounded-2xl text-sm flex items-center gap-2"
-              style={isDarkMode ? {
-                background: 'rgba(0,0,0,0.35)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.1)',
-              } : {
-                background: '#ffffff',
-                color: '#1e293b',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <div className="flex gap-1">
-                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 rounded-full bg-current animate-bounce" style={{ animationDelay: '300ms' }} />
+      {/* Messages Area */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 md:px-6 py-6">
+          {messages.length === 0 && (
+            <div className="h-[calc(100vh-280px)] flex items-center justify-center">
+              <div className="text-center space-y-2">
+                <div className="flex justify-center">
+                  <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-primary" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <h2 className={`text-lg font-semibold tracking-tight ${textClass}`}>
+                    Hi, how can I help you today?
+                  </h2>
+                  <p className={`${mutedText} text-sm max-w-sm mx-auto`}>
+                    Ask me anything or upload a PDF to get started with your questions.
+                  </p>
+                </div>
+               
               </div>
             </div>
+          )}
+
+          <div className="space-y-6">
+            {messages.map((msg) => {
+              const isUser = msg.sender === "user";
+              const isSystem = msg.sender === "system";
+              
+              return (
+                <div
+                  key={msg.id}
+                  className={cn(
+                    "flex gap-4",
+                    isUser && "flex-row-reverse",
+                    isSystem && "justify-center"
+                  )}
+                >
+                 
+                  <div
+                    className={cn(
+                      "px-4 py-1 rounded-2xl max-w-[85%] md:max-w-[75%] text-sm leading-relaxed",
+                      isUser && `${primaryBg} ${primaryText} rounded-tr-md`,
+                      msg.sender === "ai" && `${cardBg} border ${cardBorder} rounded-tl-md`,
+                      isSystem && `${isDarkMode ? 'bg-slate-800/50 text-slate-300' : 'bg-slate-100/50 text-slate-700'} text-xs px-4 py-2 flex items-center gap-2`
+                    )}
+                  >
+                    {isSystem && <FileText className="w-4 h-4 flex-shrink-0" />}
+                    {msg.text}
+                  </div>
+                </div>
+              );
+            })}
+
+            {isLoading && messages[messages.length - 1]?.text === "" && (
+              <div className="flex gap-4">
+                <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${accentBg} ${accentText} flex items-center justify-center`}>
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div className={`px-4 py-3 rounded-2xl rounded-tl-md ${cardBg} border ${cardBorder}`}>
+                  <div className="flex gap-1.5">
+                    {[0, 150, 300].map((delay, i) => (
+                      <span 
+                        key={i}
+                        className={`w-2 h-2 rounded-full ${isDarkMode ? 'bg-slate-500' : 'bg-slate-400'} animate-bounce`} 
+                        style={{animationDelay: `${delay}ms`}} 
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
 
-        <div ref={messagesEndRef} />
-      </div>
-
-      {showModelMenu && (
-        <div className={` bottom-full ml-5 left-10 w-40 rounded-xl shadow-xl overflow-hidden z-10 ${isDarkMode ? 'bg-[#1a1a1a] border border-white/10' : 'bg-white border border-slate-200'
-          }`}
-        >
-          {AI_MODELS.map(model => (
-            <button
-              key={model.id}
-              onClick={() => {
-                setSelectedModel(model);
-                setShowModelMenu(false);
-              }}
-              className={`w-full px-4 py-1 text-left transition ${selectedModel.id === model.id
-                  ? isDarkMode ? 'bg-rose-500/20' : 'bg-rose-50'
-                  : isDarkMode ? 'hover:bg-white/5' : 'hover:bg-slate-50'
-                }`}
-            >
-              <div className={`font-medium text-xs ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                {model.name}
-              </div>
-              <div className={`text-xs mt-0.5 ${isDarkMode ? 'text-white/50' : 'text-slate-500'
-                }`}>
-                {model.desc}
-              </div>
-            </button>
-          ))}
+          <div ref={messagesEndRef} />
         </div>
-      )}
+      </main>
 
       {/* Input Area */}
-      <div className="py-1 px-1">
-        {/* File Upload Progress */}
-        {isUploading && (
-          <div className={`mb-3 px-4 py-2.5 rounded-xl text-sm flex items-center gap-2 ${isDarkMode ? 'bg-rose-500/20 text-white' : 'bg-rose-50 text-rose-700'
-            }`}>
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            Uploading PDF...
-          </div>
-        )}
+      <footer className={` ${borderClass} ${headerBg} backdrop-blur-sm p-1`}>
+        <div className="max-w-3xl mx-auto">
+          {/* Upload Progress */}
+          {isUploading && (
+            <div className={`mb-3 px-4 py-2 rounded-xl ${accentBg} ${accentText} text-sm flex items-center gap-3`}>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <span>Uploading PDF...</span>
+            </div>
+          )}
 
-        {/* Unified Input Container */}
-        <div
-          className={`rounded-2xl overflow-hidden ${isDarkMode
-              ? 'bg-[#2a2a2a] border border-white/10'
-              : 'bg-white border border-slate-200 shadow-sm'
-            }`}
-        >
-          {/* Top Part - Text Input (Clickable) */}
-          <div
-            className="px-4 pt-2 cursor-text"
-            onClick={() => textareaRef.current?.focus()}
-          >
-            <textarea
-              ref={textareaRef}
-              value={inputMessage}
-              onChange={(e) => {
-                setInputMessage(e.target.value);
-                e.target.style.height = 'auto';
-                e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              rows={1}
-              placeholder="Reply..."
-              disabled={isLoading}
-              className={`w-full resize-none bg-transparent outline-none transition max-h-[120px] text-base ${isLoading ? 'cursor-not-allowed opacity-70' : ''
-                } ${isDarkMode
-                  ? 'text-white placeholder:text-white/40'
-                  : 'text-slate-900 placeholder:text-slate-400'
-                }`}
-              style={{ minHeight: '18px' }}
-            />
-          </div>
-
-          {/* Bottom Part - Actions */}
-          <div className={`px-3 py-1 flex items-center justify-between ${isDarkMode ? 'border-white/10' : 'border-slate-200'
-            }`}>
-            {/* Left Actions - Upload & Model Selector */}
-            <div className="flex items-center gap-1">
-              {/* PDF Upload Button */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf"
-                onChange={handleFileSelect}
-                className="hidden"
+   {showModelMenu && (
+                    <div className={`absolute bottom-full left-2 mb-2 w-52 rounded-xl border ${popoverBorder} ${popoverBg} shadow-lg overflow-hidden`}>
+                      <div className="p-1">
+                        {AI_MODELS.map((model) => (
+                          <button
+                            key={model.id}
+                            onClick={() => {
+                              setSelectedModel(model);
+                              setShowModelMenu(false);
+                            }}
+                            className={cn(
+                              "w-full  px-3 py-1 rounded-lg text-left transition-colors duration-150 flex items-center justify-between group",
+                              selectedModel.id === model.id
+                                ? accentBg
+                                : isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-100/50'
+                            )}
+                          >
+                            <div>
+                              <div className={`font-medium text-sm ${textClass}`}>
+                                {model.name}
+                              </div>
+                              <div className={`text-xs ${mutedText}`}>
+                                {model.desc}
+                              </div>
+                            </div>
+                            {selectedModel.id === model.id && (
+                              <Check className={`w-4 h-4 ${isDarkMode ? 'text-blue-600' : 'text-blue-600'}`} />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+          {/* Input Container */}
+          <div className={`rounded-2xl border  ${cardBorder} ${cardBg} shadow-sm overflow-hidden transition-shadow duration-200 focus-within:shadow-md ${isDarkMode ? 'focus-within:border-white-600/30' : 'focus-within:border-blue-600/30'}`}>
+            {/* Textarea */}
+            <div
+              className="px-4 pt-2 cursor-text"
+              onClick={() => textareaRef.current?.focus()}
+            >
+              <textarea
+                ref={textareaRef}
+                value={inputMessage}
+                onChange={(e) => {
+                  setInputMessage(e.target.value);
+                  e.target.style.height = "auto";
+                  e.target.style.height = Math.min(e.target.scrollHeight, 150) + "px";
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                rows={1}
+                placeholder="Message Emo..."
+                disabled={isLoading}
+                className={cn(
+                  "w-full resize-none bg-transparent outline-none transition-opacity duration-200",
+                  textClass,
+                  isDarkMode ? 'placeholder:text-slate-500' : 'placeholder:text-slate-400',
+                  isLoading && "cursor-not-allowed opacity-50"
+                )}
+                style={{ minHeight: "24px", maxHeight: "150px" }}
               />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading || isUploading}
-                className={`p-1 rounded-lg transition ${(isLoading || isUploading) ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10'
-                  } ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}
-              >
-                <Paperclip size={18} />
-              </button>
-
-              {/* Model Selector */}
-              <div className="relative z-20">
-                <button
-                  onClick={() => setShowModelMenu(!showModelMenu)}
-                  disabled={isLoading}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${isLoading ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10'
-                    } ${isDarkMode ? 'text-white/70' : 'text-slate-600'}`}
-                >
-                  {selectedModel.name}
-                  <ChevronDown size={14} className="opacity-60" />
-                </button>
-
-
-              </div>
             </div>
 
-            {/* Right Actions - Send Button Only */}
-            <div className="flex items-center gap-2">
+            {/* Actions Bar */}
+            <div className="px-3 py-1 flex items-center justify-between">
+              {/* Left Actions */}
+              <div className="flex items-center ">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading || isUploading}
+                  className={cn(
+                    "p-2 rounded-lg transition-colors duration-200",
+                    isLoading || isUploading
+                      ? "opacity-40 cursor-not-allowed"
+                      : `${hoverAccent} ${mutedText} ${isDarkMode ? 'hover:text-slate-100' : 'hover:text-slate-900'}`
+                  )}
+                  aria-label="Attach PDF"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </button>
+
+                {/* Model Selector */}
+                <div className="relative" ref={modelMenuRef}>
+                  <button
+                    onClick={() => setShowModelMenu(!showModelMenu)}
+                    disabled={isLoading}
+                    className={cn(
+                      "px-3 py-1 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2",
+                      isLoading
+                        ? "opacity-40 cursor-not-allowed"
+                        : `${hoverAccent} ${mutedText} ${isDarkMode ? 'hover:text-slate-100' : 'hover:text-slate-900'}`
+                    )}
+                  >
+                    {selectedModel.name}
+                    <ChevronDown
+                      className={cn(
+                        "w-4 h-4 transition-transform duration-200",
+                        showModelMenu && "rotate-180"
+                      )}
+                    />
+                  </button>
+
+               
+                </div>
+              </div>
+
               {/* Send Button */}
               <button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isLoading}
-                className={`p-2 rounded-xl text-white transition ${(!inputMessage.trim() || isLoading)
-                    ? 'opacity-40 cursor-not-allowed bg-rose-800/50'
-                    : 'hover:opacity-90 bg-gradient-to-br from-rose-700 to-rose-600 shadow-lg shadow-rose-500/25'
-                  }`}
+                className={cn(
+                  "p-2 rounded-xl transition-all duration-200",
+                  !inputMessage.trim() || isLoading
+                    ? isDarkMode ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    : `${primaryBg} ${primaryText} hover:opacity-90 shadow-sm`
+                )}
+                aria-label="Send message"
               >
-                <Send size={18} />
+                <Send className="w-5 h-5" />
               </button>
             </div>
           </div>
+
+          <p className={`text-center text-xs ${mutedText} mt-2`}>
+            Emo can make mistakes. Consider checking important information.
+          </p>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }
