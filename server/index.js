@@ -507,6 +507,7 @@ async function webSearch({ query }) {
     return finalresult;
 }
 
+
 // upload pdf to vector db 
 // export async function uploadPdfInVectorDB(filepath) {
 //     const loader = new PDFLoader(filepath, { splitPages: false });
