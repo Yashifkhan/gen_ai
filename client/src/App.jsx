@@ -451,13 +451,14 @@
 // 'use client';
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Moon, Sun, Paperclip, ChevronDown, Sparkles, Bot, User, FileText, Check } from "lucide-react";
+import MessageContent from "./MessageContent";
 
 const chatSessionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
 const AI_MODELS = [
-  { id: "gpt-4", name: "GPT-4", desc: "Most capable model" },
-  { id: "gpt-3.5", name: "GPT-3.5", desc: "Fast & efficient" },
-  { id: "claude", name: "Claude", desc: "Balanced performance" },
+  { id: "gpt-4", name: "Emo-4", desc: "Most capable model" },
+  { id: "gpt-3.5", name: "Emo-3.5", desc: "Fast & efficient" },
+  // { id: "claude", name: "Claude", desc: "Balanced performance" },
 ];
 
 export default function EmoChat() {
@@ -497,7 +498,7 @@ export default function EmoChat() {
     setIsUploading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/emo-chat-upload-pdf", {
+      const response = await fetch(`${process.env.API_BASE_URL}/emo-chat-upload-pdf`, {
         method: "POST",
         body: formData,
       });
@@ -569,8 +570,8 @@ export default function EmoChat() {
           sender: "ai",
         },
       ]);
-
-      const response = await fetch("http://localhost:8000/api/v1/emo-chat", {
+// http://localhost:8000/api/v1/emo-chat
+      const response = await fetch(`http://localhost:8000/api/v1/emo-chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -714,53 +715,127 @@ export default function EmoChat() {
           )}
 
           <div className="space-y-6">
-            {messages.map((msg) => {
-              const isUser = msg.sender === "user";
-              const isSystem = msg.sender === "system";
-              
-              return (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    "flex gap-4",
-                    isUser && "flex-row-reverse",
-                    isSystem && "justify-center"
+            {messages
+  .filter(msg => msg.text?.trim())
+  .map((msg) => {
+    const isUser = msg.sender === "user";
+    const isSystem = msg.sender === "system";
+
+    return (
+      // <div
+      //   key={msg.id}
+      //   className={cn(
+      //     "flex gap-4",
+      //     isUser && "flex-row-reverse",
+      //     isSystem && "justify-center"
+      //   )}
+      // >
+      //   <div
+      //     className={cn(
+      //       "px-4 py-1.5 rounded-2xl max-w-[85%] md:max-w-[75%] text-sm",
+      //       isUser && `${primaryBg} ${primaryText} rounded-tr-md`,
+      //       msg.sender === "ai" && `${cardBg} ${cardBorder} rounded-tl-md border`,
+           
+      //     )}
+      //   >
+      //     {/* {isSystem && <FileText className="w-4 h-4" />} */}
+      //     {msg.text}
+      //   </div>
+      // </div>
+      <div
+              key={msg.id}
+              className={cn(
+                "flex gap-4",
+                isUser && "flex-row-reverse",
+                isSystem && "justify-center"
+              )}
+            >
+              {/* Avatar - Optional but recommended */}
+              {/* {!isSystem && (
+                <div className={cn(
+                  "w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center",
+                  isUser 
+                    ? "bg-blue-500" 
+                    : isDarkMode 
+                      ? "bg-purple-600" 
+                      : "bg-purple-500"
+                )}>
+                  {isUser ? (
+                    <span className="text-white text-sm font-semibold">You</span>
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-white" />
                   )}
-                >
-                 
-                  <div
-                    className={cn(
-                      "px-4 py-1 rounded-2xl max-w-[85%] md:max-w-[75%] text-sm leading-relaxed",
-                      isUser && `${primaryBg} ${primaryText} rounded-tr-md`,
-                      msg.sender === "ai" && `${cardBg} border ${cardBorder} rounded-tl-md`,
-                      isSystem && `${isDarkMode ? 'bg-slate-800/50 text-slate-300' : 'bg-slate-100/50 text-slate-700'} text-xs px-4 py-2 flex items-center gap-2`
-                    )}
-                  >
-                    {isSystem && <FileText className="w-4 h-4 flex-shrink-0" />}
+                </div>
+              )} */}
+
+              <div
+                className={cn(
+                  "px-2 py-1.5 rounded-2xl max-w-[85%] md:max-w-[75%]",
+                  isUser && `${primaryBg} ${primaryText} rounded-tr-md`,
+                  msg.sender === "ai" && `${cardBg} ${cardBorder} rounded-tl-md border shadow-sm`,
+                )}
+              >
+                {/* Use MessageContent component for AI responses */}
+                {msg.sender === "ai" ? (
+                  <MessageContent content={msg.text} isDarkMode={isDarkMode} />
+                ) : (
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap">
                     {msg.text}
                   </div>
-                </div>
-              );
-            })}
-
-            {isLoading && messages[messages.length - 1]?.text === "" && (
-              <div className="flex gap-4">
-                <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${accentBg} ${accentText} flex items-center justify-center`}>
-                  <Bot className="w-4 h-4" />
-                </div>
-                <div className={`px-4 py-3 rounded-2xl rounded-tl-md ${cardBg} border ${cardBorder}`}>
-                  <div className="flex gap-1.5">
-                    {[0, 150, 300].map((delay, i) => (
-                      <span 
-                        key={i}
-                        className={`w-2 h-2 rounded-full ${isDarkMode ? 'bg-slate-500' : 'bg-slate-400'} animate-bounce`} 
-                        style={{animationDelay: `${delay}ms`}} 
-                      />
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
-            )}
+            </div>
+      
+    );
+  })}
+
+
+            {isLoading && (
+          <div className="flex justify-start">
+            <div
+              className={`relative px-5 py-1.5 rounded-2xl text-sm flex items-center gap-3
+                ${isDarkMode
+                  ? 'bg-black/40 text-white border border-white/20 shadow-lg shadow-blue-500/10'
+                  : 'bg-white text-slate-800 border border-slate-200 shadow-lg'
+                }`}
+            >
+              <span className="font-medium">AI is thinking</span>
+              <div className="flex gap-1 items-end h-2">
+  <span
+    className="w-1.5 h-1.5 rounded-full bg-blue-500"
+    style={{ animation: "dotFloat 1s ease-in-out infinite" }}
+  />
+  <span
+    className="w-1.5 h-1.5 rounded-full bg-purple-500"
+    style={{ animation: "dotFloat 1s ease-in-out infinite 0.2s" }}
+  />
+  <span
+    className="w-1.5 h-1.5 rounded-full bg-pink-500"
+    style={{ animation: "dotFloat 1s ease-in-out infinite 0.4s" }}
+  />
+</div>
+
+<style>
+{`
+@keyframes dotFloat {
+  0%, 100% {
+    transform: translateY(2px);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+}
+`}
+</style>
+
+
+              {/* <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: '3s' }} /> */}
+
+            </div>
+          </div>
+        )}
           </div>
 
           <div ref={messagesEndRef} />
