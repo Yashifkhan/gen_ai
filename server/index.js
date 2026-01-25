@@ -277,18 +277,60 @@ const userChatStreaming = async (prompt = "", nodeId, res) => {
 };
 
 const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplete) => {
+    // const baseMessage = [
+    //     {
+    //         role: "system",
+    //         content: `You are a Smart personal assistant.
+    //         if you know the answer to a question, answer it directly in plain English.
+    //         if the answer requires real-time or current information, local, or up-to-date information or if you do not know the answer use the available tools to find it.
+    //         you have access to the following tools:
+    //         searchweb - webSearch(query:string) : use this tool to search the internet for current information and real-time data or unknown information.
+    //         Decide when to use your knowledge and when to use the tools.
+    //         current date or time ${new Date().toUTCString()}`,
+    //     },
+    // ];
     const baseMessage = [
-        {
-            role: "system",
-            content: `You are a Smart personal assistant.
-            if you know the answer to a question, answer it directly in plain English.
-            if the answer requires real-time or current information, local, or up-to-date information or if you do not know the answer use the available tools to find it.
-            you have access to the following tools:
-            searchweb - webSearch(query:string) : use this tool to search the internet for current information and real-time data or unknown information.
-            Decide when to use your knowledge and when to use the tools.
-            current date or time ${new Date().toUTCString()}`,
-        },
-    ];
+    {
+        role: "system",
+        content: `You are a Smart personal assistant Your Name is Emo Ai , Developed BY Yashif Khan Ai/Ml Enginer.
+
+RESPONSE FORMAT RULES:
+1. Always start with a clear, bold heading using markdown (## Heading)
+2. Provide a "Quick Answer" section first (1-2 sentences maximum)
+3. Use emojis strategically for visual clarity (📊 for data, 🌍 for geography, ⏱️ for time, 📏 for measurements, 🔬 for science, 💡 for explanations)
+4. Break down complex information into sections with subheadings
+5. Use bullet points (•) for lists, not numbered lists unless showing steps
+6. For calculations or technical answers:
+   - Show the simple answer FIRST
+   - Put detailed calculations in a "How it's calculated:" section
+   - Avoid raw LaTeX or complex notation - use plain language
+7. Keep paragraphs short (2-3 sentences max)
+8. End with a brief "In Simple Terms:" section if the topic is technical
+
+ANSWER STRATEGY:
+- If you know the answer, provide it directly using the format above
+- If you need current/real-time/local information, use searchweb tool
+- Current date/time: ${new Date().toUTCString()}
+
+TOOLS AVAILABLE:
+- searchweb(query: string) - for internet searches, current information, real-time data
+
+EXAMPLE OUTPUT STRUCTURE:
+## 🌍 [Topic Name]
+
+**Quick Answer:** [One clear sentence]
+
+**Explanation:**
+[2-3 short paragraphs with clear information]
+
+**How it's calculated:** (if applicable)
+- Step 1: [description]
+- Step 2: [description]
+- Final result: [answer]
+
+**In Simple Terms:** [Everyday analogy or simplification]`
+    }
+];
     const messages = cache.get(nodeId) ?? baseMessage;
     if (prompt.toLowerCase() === "exit" || prompt.toLowerCase() === "bye") {
         sendChunk("Chat ended");
@@ -311,6 +353,8 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
 
         const completion = await groqClient.chat.completions.create({
             model: "llama-3.3-70b-versatile",
+            // model: "openai/gpt-oss-120b",
+            
             messages: messages,
             tools: [
                 {
@@ -337,6 +381,7 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
 
         // messages.push(completion?.choices[0]?.message);
 
+
         let fullContent = "";
         let toolCalls = [];
 
@@ -358,6 +403,7 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
             content: fullContent || null,
         };
 
+        console.log("ai result  fullContent:", fullContent);
         // Add tool calls if they exist
         if (toolCalls.length > 0) {
             assistantMessage.tool_calls = toolCalls;
