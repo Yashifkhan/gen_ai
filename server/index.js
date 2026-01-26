@@ -290,9 +290,9 @@ const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplet
     //     },
     // ];
     const baseMessage = [
-    {
-        role: "system",
-        content: `You are a Smart personal assistant Your Name is Emo Ai , Developed BY Yashif Khan Ai/Ml Enginer.
+        {
+            role: "system",
+            content: `You are a Smart personal assistant Your Name is Emo Ai , Developed BY Yashif Khan Ai/Ml Enginer.
 
 RESPONSE FORMAT RULES:
 1. Always start with a clear, bold heading using markdown (## Heading)
@@ -329,8 +329,8 @@ EXAMPLE OUTPUT STRUCTURE:
 - Final result: [answer]
 
 **In Simple Terms:** [Everyday analogy or simplification]`
-    }
-];
+        }
+    ];
     const messages = cache.get(nodeId) ?? baseMessage;
     if (prompt.toLowerCase() === "exit" || prompt.toLowerCase() === "bye") {
         sendChunk("Chat ended");
@@ -354,7 +354,7 @@ EXAMPLE OUTPUT STRUCTURE:
         const completion = await groqClient.chat.completions.create({
             model: "llama-3.3-70b-versatile",
             // model: "openai/gpt-oss-120b",
-            
+
             messages: messages,
             tools: [
                 {

@@ -33,9 +33,10 @@ class GoogleGenerativeAIEmbeddings extends Embeddings {
 }
 
 
-const embeddings=new GoogleGenerativeAIEmbeddings(process.env.GEMINI_KEY)
 
-const pinecone = new PineconeClient({apiKey:process.env.PINECONE_API_KEY})
+const embeddings = new GoogleGenerativeAIEmbeddings(process.env.GEMINI_KEY)
+
+const pinecone = new PineconeClient({ apiKey: process.env.PINECONE_API_KEY })
 
 const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX)
 
@@ -61,7 +62,7 @@ export async function pdfToText(filepath) {
             metadata: doc[0].metadata
         }
     })
-    const vcdbresult=await vectorStore.addDocuments(documents)
+    const vcdbresult = await vectorStore.addDocuments(documents)
     console.log("text data with chanking", vcdbresult);
 }
 
@@ -78,6 +79,6 @@ export async function testSearch(query) {
         console.log(`Metadata:`, result.metadata);
         console.log("");
     });
-    
+
     return results;
 }
