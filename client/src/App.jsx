@@ -453,6 +453,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Moon, Sun, Paperclip, ChevronDown, Sparkles, Bot, User, FileText, Check } from "lucide-react";
 import MessageContent from "./MessageContent";
+import.meta.env
+
+
+const apiUrl = import.meta.env.VITE_API_URL;
+console.log("api url ",apiUrl);
 
 const chatSessionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
@@ -463,6 +468,8 @@ const AI_MODELS = [
 ];
 
 export default function EmoChat() {
+
+  
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -499,7 +506,7 @@ export default function EmoChat() {
     setIsUploading(true);
 
     try {
-      const response = await fetch(`${process.env.API_BASE_URL}/emo-chat-upload-pdf`, {
+      const response = await fetch(`${apiUrl}/emo-chat-upload-pdf`, {
         method: "POST",
         body: formData,
       });
@@ -572,7 +579,7 @@ export default function EmoChat() {
         },
       ]);
 // http://localhost:8000/api/v1/emo-chat
-      const response = await fetch(`http://localhost:8000/api/v1/emo-chat`, {
+      const response = await fetch(`${apiUrl}/emo-chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
