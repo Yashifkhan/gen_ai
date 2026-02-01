@@ -21,8 +21,8 @@ app.get('/api/v1/emo', (req, res) => {
 
 app.use('/api/v1',router)
 
-module.exports = app;
 
-// app.listen(PORT, () => {
-//     console.log(`Server is running on port ${PORT}`);
-// });
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
