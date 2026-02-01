@@ -511,6 +511,7 @@ export default function EmoChat() {
         body: formData,
       });
 
+      
       const data = await response.json();
 
       if (data.success) {
