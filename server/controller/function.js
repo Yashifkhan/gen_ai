@@ -250,12 +250,13 @@ const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
 // };
 
 const userChatStreaming = async (prompt = "", nodeId, res) => {
+    console.log("am run in function file ");
+    
+
     const intent = await classifyIntent(prompt);
     console.log("intent", intent);
 
-    // Helper function to send streaming chunks
     const sendChunk = (text) => {
-        // console.log("stream response : ",text);
 
         res.write(`data: ${JSON.stringify({ chunk: text })}\n\n`);
     };
@@ -331,7 +332,12 @@ EXAMPLE OUTPUT STRUCTURE:
 **In Simple Terms:** [Everyday analogy or simplification]`
         }
     ];
+
+    // console.log("node id ",nodeId);
+    
+    
     const messages = cache.get(nodeId) ?? baseMessage;
+    // console.log("base message ",messages);
     if (prompt.toLowerCase() === "exit" || prompt.toLowerCase() === "bye") {
         sendChunk("Chat ended");
         sendComplete();
@@ -600,10 +606,8 @@ export async function uploadPdfInVectorDB(filepath, nodeId) {
         });
 
         // Upload to Pinecone
-        await vectorStore.addDocuments(documents);
-
+        await vectorStore.addDocuments(documents)
         console.log(`✅ Uploaded ${documents.length} chunks for nodeId: ${nodeId}`);
-
         return documents;
 
     } catch (error) {

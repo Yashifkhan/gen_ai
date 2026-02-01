@@ -2,115 +2,27 @@ import express from 'express';
 import dotenv from 'dotenv';
 dotenv.config();
 import cors from 'cors';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 
-import userChatStreaming, { uploadPdfInVectorDB } from './index.js';
+import router from './routes/emo_route.js';
+import { uploadPdfInVectorDB } from './controller/function.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-app.use(cors());
+app.use(cors({
+     methods: ["POST"],
+}));
 app.use(express.json());
 
-app.get('/', (req, res) => {
-    res.send('Hello, World!');
+app.get('/api/v1/emo', (req, res) => {
+    console.log("emo is run");
+    res.send('Emo is ready');
 });
 
-// multer setup 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = './uploads';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-        }
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        const uniqueName = `${Date.now()}-${file.originalname}`;
-        cb(null, uniqueName);
-    }
-});
-const upload = multer({
-    storage: storage,
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'application/pdf') {
-            cb(null, true);
-        } else {
-            cb(new Error('Only PDF files are allowed!'));
-        }
-    }
-});
+app.use('/api/v1',router)
 
-app.post('/api/v1/emo-chat-upload-pdf', upload.single('pdf'), async (req, res) => {
-    try {
-        const { nodeId } = req.body;
-        if (!req.file) {
-            return res.status(400).json({
-                message: "No PDF file uploaded",
-                success: false
-            });
-        }
+module.exports = app;
 
-        if (!nodeId) {
-            return res.status(400).json({
-                message: "nodeId is required",
-                success: false
-            });
-        }
-
-        const filepath = req.file.path;
-
-        // Upload to vector DB with nodeId in metadata
-        const result = await uploadPdfInVectorDB(filepath, nodeId);
-
-        res.status(201).json({
-            message: "PDF uploaded successfully",
-            success: true,
-            data: {
-                filename: req.file.originalname,
-                nodeId: nodeId,
-                chunks: result.length
-            }
-        });
-
-    } catch (error) {
-        console.error("Error uploading PDF:", error);
-        res.status(500).json({
-            message: "Failed to upload PDF",
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-app.post('/api/v1/emo-chat', async (req, res) => {
-    const { message, nodeId } = req.body;
-
-    if (!message || !nodeId) {
-        return res.status(400).json({
-            message: "Invalid request, message and nodeId are required.",
-            success: false
-        });
-    }
-
-    // Set headers for Server-Sent Events (SSE)
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
-
-    try {
-        await userChatStreaming(message, nodeId, res);
-    } catch (error) {
-        console.error('Streaming error:', error);
-        res.write(`data: ${JSON.stringify({ error: 'An error occurred' })}\n\n`);
-    } finally {
-        res.end();
-    }
-});
-
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//     console.log(`Server is running on port ${PORT}`);
+// });
