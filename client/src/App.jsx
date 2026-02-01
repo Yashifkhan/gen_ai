@@ -503,6 +503,7 @@ export default function EmoChat() {
     formData.append("pdf", file);
     formData.append("nodeId", chatSessionId);
 
+    
     setIsUploading(true);
 
     try {
@@ -511,7 +512,7 @@ export default function EmoChat() {
         body: formData,
       });
 
-      
+
       const data = await response.json();
 
       if (data.success) {
