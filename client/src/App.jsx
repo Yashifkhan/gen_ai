@@ -457,7 +457,7 @@ import.meta.env
 
 
 const apiUrl = import.meta.env.VITE_API_URL;
-console.log("api url ",apiUrl);
+console.log("api url ", apiUrl);
 
 const chatSessionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
@@ -469,7 +469,7 @@ const AI_MODELS = [
 
 export default function EmoChat() {
 
-  
+
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -503,7 +503,7 @@ export default function EmoChat() {
     formData.append("pdf", file);
     formData.append("nodeId", chatSessionId);
 
-    
+
     setIsUploading(true);
 
     try {
@@ -580,7 +580,7 @@ export default function EmoChat() {
           sender: "ai",
         },
       ]);
-// http://localhost:8000/api/v1/emo-chat
+      // http://localhost:8000/api/v1/emo-chat
       const response = await fetch(`${apiUrl}/emo-chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -678,8 +678,8 @@ export default function EmoChat() {
       {/* Header */}
       <header className={`flex items-center justify-between px-4 md:px-6 py-2 border-b ${borderClass} backdrop-blur-sm ${headerBg} sticky top-0 z-50`}>
         <div className="flex items-center gap-3">
-          
-           <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground">
+
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
@@ -719,49 +719,49 @@ export default function EmoChat() {
                     Ask me anything or upload a PDF to get started with your questions.
                   </p>
                 </div>
-               
+
               </div>
             </div>
           )}
 
           <div className="space-y-6">
             {messages
-  .filter(msg => msg.text?.trim())
-  .map((msg) => {
-    const isUser = msg.sender === "user";
-    const isSystem = msg.sender === "system";
+              .filter(msg => msg.text?.trim())
+              .map((msg) => {
+                const isUser = msg.sender === "user";
+                const isSystem = msg.sender === "system";
 
-    return (
-      // <div
-      //   key={msg.id}
-      //   className={cn(
-      //     "flex gap-4",
-      //     isUser && "flex-row-reverse",
-      //     isSystem && "justify-center"
-      //   )}
-      // >
-      //   <div
-      //     className={cn(
-      //       "px-4 py-1.5 rounded-2xl max-w-[85%] md:max-w-[75%] text-sm",
-      //       isUser && `${primaryBg} ${primaryText} rounded-tr-md`,
-      //       msg.sender === "ai" && `${cardBg} ${cardBorder} rounded-tl-md border`,
-           
-      //     )}
-      //   >
-      //     {/* {isSystem && <FileText className="w-4 h-4" />} */}
-      //     {msg.text}
-      //   </div>
-      // </div>
-      <div
-              key={msg.id}
-              className={cn(
-                "flex gap-4",
-                isUser && "flex-row-reverse",
-                isSystem && "justify-center"
-              )}
-            >
-              {/* Avatar - Optional but recommended */}
-              {/* {!isSystem && (
+                return (
+                  // <div
+                  //   key={msg.id}
+                  //   className={cn(
+                  //     "flex gap-4",
+                  //     isUser && "flex-row-reverse",
+                  //     isSystem && "justify-center"
+                  //   )}
+                  // >
+                  //   <div
+                  //     className={cn(
+                  //       "px-4 py-1.5 rounded-2xl max-w-[85%] md:max-w-[75%] text-sm",
+                  //       isUser && `${primaryBg} ${primaryText} rounded-tr-md`,
+                  //       msg.sender === "ai" && `${cardBg} ${cardBorder} rounded-tl-md border`,
+
+                  //     )}
+                  //   >
+                  //     {/* {isSystem && <FileText className="w-4 h-4" />} */}
+                  //     {msg.text}
+                  //   </div>
+                  // </div>
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      "flex gap-4",
+                      isUser && "flex-row-reverse",
+                      isSystem && "justify-center"
+                    )}
+                  >
+                    {/* Avatar - Optional but recommended */}
+                    {/* {!isSystem && (
                 <div className={cn(
                   "w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center",
                   isUser 
@@ -778,55 +778,55 @@ export default function EmoChat() {
                 </div>
               )} */}
 
-              <div
-                className={cn(
-                  "px-2 py-1.5 rounded-2xl max-w-[85%] md:max-w-[75%]",
-                  isUser && `${primaryBg} ${primaryText} rounded-tr-md`,
-                  msg.sender === "ai" && `${cardBg} ${cardBorder} rounded-tl-md border shadow-sm`,
-                )}
-              >
-                {/* Use MessageContent component for AI responses */}
-                {msg.sender === "ai" ? (
-                  <MessageContent content={msg.text} isDarkMode={isDarkMode} />
-                ) : (
-                  <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {msg.text}
+                    <div
+                      className={cn(
+                        "px-2 py-1.5 rounded-2xl max-w-[85%] md:max-w-[75%]",
+                        isUser && `${primaryBg} ${primaryText} rounded-tr-md`,
+                        msg.sender === "ai" && `${cardBg} ${cardBorder} rounded-tl-md border shadow-sm`,
+                      )}
+                    >
+                      {/* Use MessageContent component for AI responses */}
+                      {msg.sender === "ai" ? (
+                        <MessageContent content={msg.text} isDarkMode={isDarkMode} />
+                      ) : (
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                          {msg.text}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            </div>
-      
-    );
-  })}
+
+                );
+              })}
 
 
             {isLoading && (
-          <div className="flex justify-start">
-            <div
-              className={`relative px-5 py-1.5 rounded-2xl text-sm flex items-center gap-3
+              <div className="flex justify-start">
+                <div
+                  className={`relative px-5 py-1.5 rounded-2xl text-sm flex items-center gap-3
                 ${isDarkMode
-                  ? 'bg-black/40 text-white border border-white/20 shadow-lg shadow-blue-500/10'
-                  : 'bg-white text-slate-800 border border-slate-200 shadow-lg'
-                }`}
-            >
-              <span className="font-medium">AI is thinking</span>
-              <div className="flex gap-1 items-end h-2">
-  <span
-    className="w-1.5 h-1.5 rounded-full bg-blue-500"
-    style={{ animation: "dotFloat 1s ease-in-out infinite" }}
-  />
-  <span
-    className="w-1.5 h-1.5 rounded-full bg-purple-500"
-    style={{ animation: "dotFloat 1s ease-in-out infinite 0.2s" }}
-  />
-  <span
-    className="w-1.5 h-1.5 rounded-full bg-pink-500"
-    style={{ animation: "dotFloat 1s ease-in-out infinite 0.4s" }}
-  />
-</div>
+                      ? 'bg-black/40 text-white border border-white/20 shadow-lg shadow-blue-500/10'
+                      : 'bg-white text-slate-800 border border-slate-200 shadow-lg'
+                    }`}
+                >
+                  <span className="font-medium">AI is thinking</span>
+                  <div className="flex gap-1 items-end h-2">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-blue-500"
+                      style={{ animation: "dotFloat 1s ease-in-out infinite" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-purple-500"
+                      style={{ animation: "dotFloat 1s ease-in-out infinite 0.2s" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-pink-500"
+                      style={{ animation: "dotFloat 1s ease-in-out infinite 0.4s" }}
+                    />
+                  </div>
 
-<style>
-{`
+                  <style>
+                    {`
 @keyframes dotFloat {
   0%, 100% {
     transform: translateY(2px);
@@ -838,14 +838,14 @@ export default function EmoChat() {
   }
 }
 `}
-</style>
+                  </style>
 
 
-              {/* <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: '3s' }} /> */}
+                  {/* <Sparkles className="w-4 h-4 animate-spin" style={{ animationDuration: '3s' }} /> */}
 
-            </div>
-          </div>
-        )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div ref={messagesEndRef} />
@@ -863,39 +863,39 @@ export default function EmoChat() {
             </div>
           )}
 
-   {showModelMenu && (
-                    <div className={`absolute bottom-full left-2 mb-2 w-52 rounded-xl border ${popoverBorder} ${popoverBg} shadow-lg overflow-hidden`}>
-                      <div className="p-1">
-                        {AI_MODELS.map((model) => (
-                          <button
-                            key={model.id}
-                            onClick={() => {
-                              setSelectedModel(model);
-                              setShowModelMenu(false);
-                            }}
-                            className={cn(
-                              "w-full  px-3 py-1 rounded-lg text-left transition-colors duration-150 flex items-center justify-between group",
-                              selectedModel.id === model.id
-                                ? accentBg
-                                : isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-100/50'
-                            )}
-                          >
-                            <div>
-                              <div className={`font-medium text-sm ${textClass}`}>
-                                {model.name}
-                              </div>
-                              <div className={`text-xs ${mutedText}`}>
-                                {model.desc}
-                              </div>
-                            </div>
-                            {selectedModel.id === model.id && (
-                              <Check className={`w-4 h-4 ${isDarkMode ? 'text-blue-600' : 'text-blue-600'}`} />
-                            )}
-                          </button>
-                        ))}
+          {showModelMenu && (
+            <div className={`absolute bottom-full left-2 mb-2 w-52 rounded-xl border ${popoverBorder} ${popoverBg} shadow-lg overflow-hidden`}>
+              <div className="p-1">
+                {AI_MODELS.map((model) => (
+                  <button
+                    key={model.id}
+                    onClick={() => {
+                      setSelectedModel(model);
+                      setShowModelMenu(false);
+                    }}
+                    className={cn(
+                      "w-full  px-3 py-1 rounded-lg text-left transition-colors duration-150 flex items-center justify-between group",
+                      selectedModel.id === model.id
+                        ? accentBg
+                        : isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-100/50'
+                    )}
+                  >
+                    <div>
+                      <div className={`font-medium text-sm ${textClass}`}>
+                        {model.name}
+                      </div>
+                      <div className={`text-xs ${mutedText}`}>
+                        {model.desc}
                       </div>
                     </div>
-                  )}
+                    {selectedModel.id === model.id && (
+                      <Check className={`w-4 h-4 ${isDarkMode ? 'text-blue-600' : 'text-blue-600'}`} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Input Container */}
           <div className={`rounded-2xl border  ${cardBorder} ${cardBg} shadow-sm overflow-hidden transition-shadow duration-200 focus-within:shadow-md ${isDarkMode ? 'focus-within:border-white-600/30' : 'focus-within:border-blue-600/30'}`}>
             {/* Textarea */}
@@ -976,7 +976,7 @@ export default function EmoChat() {
                     />
                   </button>
 
-               
+
                 </div>
               </div>
 
