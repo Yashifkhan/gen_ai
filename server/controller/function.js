@@ -559,25 +559,6 @@ async function webSearch({ query }) {
     return finalresult;
 }
 
-
-// upload pdf to vector db 
-// export async function uploadPdfInVectorDB(filepath) {
-//     const loader = new PDFLoader(filepath, { splitPages: false });
-//     const doc = await loader.load();
-//     const textSplitter = new RecursiveCharacterTextSplitter({
-//         chunkSize: 500,
-//         chunkOverlap: 100,
-//     });
-//     const text = await textSplitter.splitText(doc[0].pageContent);
-//     const documents = text.map((chunk) => {
-//         return {
-//             pageContent: chunk,
-//             metadata: doc[0].metadata
-//         }
-//     })
-//     const vcdbresult=await vectorStore.addDocuments(documents)
-//     console.log("pdf save in db ", vcdbresult);
-// }
 export async function uploadPdfInVectorDB(filepath, nodeId) {
     try {
         // Load PDF
