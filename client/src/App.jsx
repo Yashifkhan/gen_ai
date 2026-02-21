@@ -457,13 +457,13 @@ import.meta.env
 
 
 const apiUrl = import.meta.env.VITE_API_URL;
-console.log("api url ", apiUrl);
+// console.log("api url ", apiUrl);
 
 const chatSessionId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
 const AI_MODELS = [
-  { id: "gpt-4", name: "Emo-4", desc: "Most capable model" },
-  { id: "gpt-3.5", name: "Emo-3.5", desc: "Fast & efficient" },
+  { id: "Emo-3.5", name: "Emo-3.5", desc: "Fast & efficient" },
+  { id: "Emo-4", name: "Emo-4", desc: "Most capable model" },
   // { id: "claude", name: "Claude", desc: "Balanced performance" },
 ];
 
@@ -657,6 +657,18 @@ export default function EmoChat() {
 
   const cn = (...classes) => classes.filter(Boolean).join(" ");
 
+
+  const handleModelSelect=(model)=>{
+    console.log("model is ",model);
+    
+     setSelectedModel(model);
+      setShowModelMenu(false);
+
+  }
+
+  console.log("hiiii");
+  
+
   // Theme classes
   const bgClass = isDarkMode ? 'bg-black' : 'bg-white';
   const textClass = isDarkMode ? 'text-slate-100' : 'text-slate-900';
@@ -673,6 +685,11 @@ export default function EmoChat() {
   const popoverBg = isDarkMode ? 'bg-black' : 'bg-white';
   const popoverBorder = isDarkMode ? 'border-slate-600' : 'border-slate-200';
 
+
+
+
+  // console.log("selectedModel",selectedModel);
+  
   return (
     <div className={`h-screen flex flex-col transition-colors duration-300 ${bgClass} ${textClass}`}>
       {/* Header */}
@@ -864,15 +881,17 @@ export default function EmoChat() {
           )}
 
           {showModelMenu && (
-            <div className={`absolute bottom-full left-2 mb-2 w-52 rounded-xl border ${popoverBorder} ${popoverBg} shadow-lg overflow-hidden`}>
+            <div className={`absolute bottom-full left-2 mb-2 w-52 rounded-xl border pointer-events-auto z-[9999] ${popoverBorder} ${popoverBg} shadow-lg overflow-hidden`}>
               <div className="p-1">
                 {AI_MODELS.map((model) => (
                   <button
                     key={model.id}
-                    onClick={() => {
-                      setSelectedModel(model);
-                      setShowModelMenu(false);
-                    }}
+                onMouseDown={(e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  handleModelSelect(model);
+  console.log("hii model selct ");
+}}
                     className={cn(
                       "w-full  px-3 py-1 rounded-lg text-left transition-colors duration-150 flex items-center justify-between group",
                       selectedModel.id === model.id
