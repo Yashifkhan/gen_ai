@@ -3,7 +3,8 @@ import userChatStreaming from "./function.js";
 import { uploadPdfInVectorDB } from "./function.js";
 
 export  const emoChat=async(req,res)=>{
-    const { message, nodeId } = req.body;
+    const { message, nodeId,model } = req.body;
+    console.log("Received message:", model);
 
     if (!message || !nodeId) {
         return res.status(400).json({
@@ -19,7 +20,7 @@ export  const emoChat=async(req,res)=>{
     res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
 
     try {
-        await userChatStreaming(message, nodeId, res);
+        await userChatStreaming(message, nodeId, res,model);
     } catch (error) {
         console.error('Streaming error:', error);
         res.write(`data: ${JSON.stringify({ error: 'An error occurred' })}\n\n`);

@@ -249,7 +249,7 @@ const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
 //   return "I couldn't determine how to handle your request. Please try again.";
 // };
 
-const userChatStreaming = async (prompt = "", nodeId, res) => {
+const userChatStreaming = async (prompt = "", nodeId, res,model) => {
     console.log("am run in function file ");
     
 
@@ -266,10 +266,10 @@ const userChatStreaming = async (prompt = "", nodeId, res) => {
     };
 
     if (intent === "general_chat" || intent === "websearch") {
-        await handleGeneralChatStreaming(prompt, nodeId, sendChunk, sendComplete);
+        await handleGeneralChatStreaming(prompt, nodeId, sendChunk, sendComplete,model);
     }
     else if (intent === "pdf_query") {
-        await handlePdfQueryStreaming(prompt, nodeId, sendChunk, sendComplete);
+        await handlePdfQueryStreaming(prompt, nodeId, sendChunk, sendComplete,model);
     }
     else {
         sendChunk("I couldn't determine how to handle your request. Please try again.");
@@ -277,7 +277,9 @@ const userChatStreaming = async (prompt = "", nodeId, res) => {
     }
 };
 
-const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplete) => {
+const handleGeneralChatStreaming = async (prompt, nodeId, sendChunk, sendComplete,model) => {
+    console.log("model reached",model);
+    
     // const baseMessage = [
     //     {
     //         role: "system",
@@ -357,9 +359,17 @@ EXAMPLE OUTPUT STRUCTURE:
         }
         count++;
 
+       const modelSelection =
+  model === "Emo-3.5"
+    ? "llama-3.3-70b-versatile"
+    : model === "Emo-4"
+    ? "openai/gpt-oss-120b"
+    : "llama-3.3-70b-versatile";
+
+        console.log("modelSelection",modelSelection);
+        
         const completion = await groqClient.chat.completions.create({
-            model: "llama-3.3-70b-versatile",
-            // model: "openai/gpt-oss-120b",
+          model:modelSelection,
 
             messages: messages,
             tools: [
@@ -382,7 +392,8 @@ EXAMPLE OUTPUT STRUCTURE:
                 }
             ],
             tool_choice: 'auto',
-            stream: true // Enable streaming
+            stream: true 
+            // Enable streaming
         });
 
         // messages.push(completion?.choices[0]?.message);
@@ -409,7 +420,7 @@ EXAMPLE OUTPUT STRUCTURE:
             content: fullContent || null,
         };
 
-        console.log("ai result  fullContent:", fullContent);
+        // console.log("ai result  fullContent:", fullContent);
         // Add tool calls if they exist
         if (toolCalls.length > 0) {
             assistantMessage.tool_calls = toolCalls;
@@ -425,7 +436,7 @@ EXAMPLE OUTPUT STRUCTURE:
 
         // Handle tool calls
         for (const tool of toolCalls) {
-            console.log("tool call ", tool);
+            // console.log("tool call ", tool);
             const functionName = tool.function.name;
             const functionParams = tool.function.arguments;
 
